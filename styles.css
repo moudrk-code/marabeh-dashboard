@@ -1,230 +1,622 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>مرابح الذكي — نموذج Dashboard</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-</head>
-<body>
-  <div id="app" class="app">
-    <div id="login-view" class="panel centered">
-      <h1>مرحبًا بـ مرابح الذكي</h1>
-      <p>سجّل دخول منشأتك لتجربة النموذج السريع</p>
-      <form id="login-form" class="form">
-        <label>اسم المنشأة
-          <input id="business-name" type="text" placeholder="اسم المنشأة" required />
-          <div class="error" id="err-business-name"></div>
-        </label>
-        <label>البريد الإلكتروني
-          <input id="business-email" type="email" placeholder="business@example.com" required />
-          <div class="error" id="err-business-email"></div>
-        </label>
-        <div class="row">
-          <button type="submit" class="btn primary">دخول تجريبي</button>
-          <button id="guest-btn" type="button" class="btn secondary">تجربة كزائر</button>
-        </div>
-      </form>
-      <small class="muted">النموذج يحفظ بياناتك محليًا فقط (localStorage)</small>
-    </div>
+:root{
+  --bg:#f5f7fa;
+  --panel:#ffffff;
+  --panel-soft:#f9fafb;
+  --primary:#0f172a;
+  --primary-2:#0a7ea4;
+  --primary-3:#e7f6fb;
+  --text:#111827;
+  --muted:#6b7280;
+  --line:#e5e7eb;
+  --success:#1f9d65;
+  --warning:#f59e0b;
+  --danger:#ef4444;
+  --shadow:0 12px 30px rgba(15,23,42,0.08);
+  --radius:18px;
+}
 
-    <div id="main-view" class="layout hidden">
-      <header class="topbar">
-        <div class="brand">
-          <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663977640392/YhaZejpwgPEauNrR.png" alt="لوغو" />
-          <h2>مرابح الذكي</h2>
-        </div>
-        <div class="top-actions">
-          <span id="current-business"></span>
-          <button id="logout" class="btn ghost">تسجيل خروج</button>
-        </div>
-      </header>
+*{box-sizing:border-box}
+html, body{
+  margin:0;
+  padding:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Segoe UI","Tahoma","Arial","Noto Sans Arabic","sans-serif";
+  direction:rtl;
+}
 
-      <main class="content">
-        <nav class="sidebar">
-          <ul>
-            <li data-tab="purchases" class="active">إدارة المشتريات والجملة</li>
-            <li data-tab="margins">مخطط هوامش الربح</li>
-            <li data-tab="bank">المطابقة البنكية</li>
-            <li data-tab="dashboard">لوحة التحليلات والتقارير</li>
-            <li data-tab="activity">السجل</li>
-          </ul>
-        </nav>
+body{
+  min-height:100vh;
+}
 
-        <section class="panel-view">
-          <section id="tab-purchases" class="panel active-panel">
-            <div class="panel-header">
-              <h3>إدارة المشتريات والجملة</h3>
-              <div class="actions">
-                <input id="file-upload" type="file" accept=".xlsx,.xls,.csv" hidden />
-                <button id="btn-upload-file" class="btn">رفع ملف Excel/CSV</button>
-                <button id="btn-add-product" class="btn primary">إضافة منتج</button>
-                <button id="btn-upload-invoice" class="btn">رفع صورة فاتورة (OCR)</button>
-              </div>
-            </div>
+button, input, select{
+  font:inherit;
+}
 
-            <div id="upload-status" class="upload-status hidden"></div>
+.hidden{display:none !important}
 
-            <div class="summary-cards">
-              <div class="card"><strong id="card-total-cost">0 SAR</strong><div>إجمالي تكلفة المشتريات</div></div>
-              <div class="card"><strong id="card-tax-total">0 SAR</strong><div>إجمالي الضريبة (15%)</div></div>
-              <div class="card"><strong id="card-products-count">0</strong><div>عدد المنتجات</div></div>
-            </div>
+.app-shell{
+  min-height:100vh;
+  background:linear-gradient(180deg,#f2f5f9 0%, #f8fafc 100%);
+}
 
-            <div class="table-wrap">
-              <table id="products-table" class="table">
-                <thead>
-                  <tr>
-                    <th>اسم المنتج</th>
-                    <th>المورد</th>
-                    <th>سعر الجملة (SAR)</th>
-                    <th>ضريبة 15%</th>
-                    <th>الكمية</th>
-                    <th>إجمالي</th>
-                    <th>إجراءات</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </section>
+.login-screen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  padding:32px 18px;
+}
 
-          <section id="tab-margins" class="panel">
-            <div class="panel-header">
-              <h3>مخطط هوامش الربح</h3>
-            </div>
+.panel{
+  width:min(100%, 520px);
+  background:rgba(255,255,255,0.9);
+  border:1px solid rgba(148,163,184,0.18);
+  border-radius:28px;
+  box-shadow:var(--shadow);
+  backdrop-filter: blur(6px);
+}
 
-            <div class="grid">
-              <div class="card">
-                <label>تحديد المنتج للاختبار
-                  <select id="margin-product"></select>
-                </label>
-                <label>الهامش (%) <span id="margin-val">25</span>
-                  <input id="margin-slider" type="range" min="5" max="50" value="25" />
-                </label>
-                <label>هامش ثابت لكل قطعة (SAR)
-                  <input id="fixed-profit" type="number" min="0" step="0.01" placeholder="0.00" />
-                </label>
-                <label><input id="include-shipping" type="checkbox" /> تضمين تكلفة الشحن (SAR)
-                  <input id="shipping-cost" type="number" min="0" step="0.01" placeholder="0.00" /></label>
-                <label><input id="include-gateway" type="checkbox" /> تضمين رسوم بوابة الدفع 2.5%</label>
-                <label><input id="include-vat" type="checkbox" /> تضمين ضريبة القيمة المضافة 15%</label>
-              </div>
+.centered{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 
-              <div class="card" id="margin-result">
-                <h4>النتيجة</h4>
-                <div>سعر البيع المقترح: <strong id="sale-price">0.00 SAR</strong></div>
-                <div>السعر قبل الضريبة: <strong id="price-before-vat">0.00 SAR</strong></div>
-                <div>صافي الربح: <strong id="net-profit">0.00 SAR</strong></div>
-                <div>قيمة الضريبة (15%): <strong id="vat-value">0.00 SAR</strong></div>
-              </div>
-            </div>
+.brand-mark{
+  width:70px;
+  height:70px;
+  border-radius:20px;
+  background:linear-gradient(135deg,#0f172a,#0a7ea4);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:2.1rem;
+  font-weight:800;
+  margin-bottom:16px;
+  box-shadow:0 15px 25px rgba(10,126,164,.25);
+}
 
-            <div class="card mt">
-              <h4>مقارنة هوامش</h4>
-              <table class="table small" id="margins-compare">
-                <thead><tr><th>هامش</th><th>سعر الجملة</th><th>سعر البيع المقترح</th><th>صافي الربح</th><th>سعر شامل الضريبة</th></tr></thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </section>
+.brand-mark.small{
+  width:42px;
+  height:42px;
+  border-radius:12px;
+  font-size:1.5rem;
+}
 
-          <section id="tab-bank" class="panel">
-            <div class="panel-header">
-              <h3>المطابقة البنكية</h3>
-              <div class="actions">
-                <input id="bank-file" type="file" accept=".xlsx,.xls,.csv,.pdf,image/*" hidden />
-                <button id="btn-bank-file" class="btn">رفع كشف الحساب</button>
-              </div>
-            </div>
+h1{
+  margin:0;
+  font-size:clamp(2rem, 4vw, 3.1rem);
+  font-weight:800;
+  letter-spacing:-0.04em;
+  line-height:1.1;
+  text-align:center;
+}
 
-            <div id="bank-status" class="card"></div>
+.subtitle{
+  margin:12px 0 0;
+  color:var(--muted);
+  text-align:center;
+  font-size:1.02rem;
+  line-height:1.8;
+  width:min(100%, 520px);
+}
 
-            <div class="card">
-              <h4>المطابقة (تجريبي)</h4>
-              <table class="table" id="bank-table">
-                <thead><tr><th>التاريخ</th><th>البيان</th><th>المبلغ</th><th>مطابقة</th></tr></thead>
-                <tbody></tbody>
-              </table>
-            </div>
-            <div class="row mt">
-              <button id="export-bank-report" class="btn">تصدير تقرير Excel</button>
-              <button id="export-bank-pdf" class="btn">تصدير PDF (محاكاة)</button>
-            </div>
-          </section>
+.login-form{
+  width:min(100%, 440px);
+  margin-top:28px;
+}
 
-          <section id="tab-dashboard" class="panel">
-            <div class="panel-header">
-              <h3>لوحة التحليلات والتقارير</h3>
-            </div>
-            <div class="summary-cards">
-              <div class="card"><strong id="dash-total-cost">0 SAR</strong><div>إجمالي تكلفة المشتريات</div></div>
-              <div class="card"><strong id="dash-expected-profit">0 SAR</strong><div>الأرباح المتوقعة (هامش 25%)</div></div>
-              <div class="card"><strong id="dash-actual-profit">0 SAR</strong><div>الأرباح المحققة (من كشف البنك)</div></div>
-            </div>
-            <div class="card mt">
-              <h4>توصيات ذكية (تجريبية)</h4>
-              <ul id="recommendations"></ul>
-            </div>
-          </section>
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-bottom:18px;
+}
 
-          <section id="tab-activity" class="panel">
-            <div class="panel-header"><h3>السجل</h3></div>
-            <div class="card">
-              <ul id="audit-list"></ul>
-            </div>
-          </section>
-        </section>
-      </main>
-    </div>
+.field span{
+  font-size:0.9rem;
+  color:var(--muted);
+  font-weight:600;
+}
 
-    <div id="modal-add-product" class="modal hidden">
-      <div class="modal-card">
-        <h3>إضافة منتج جديد</h3>
-        <form id="add-product-form" class="form">
-          <label>اسم المنتج
-            <input id="prod-name" type="text" />
-            <div class="error" id="err-prod-name"></div>
-          </label>
-          <label>المورد
-            <input id="prod-supplier" type="text" />
-            <div class="error" id="err-prod-supplier"></div>
-          </label>
-          <label>سعر الجملة (SAR)
-            <input id="prod-cost" type="number" min="0.01" step="0.01" />
-            <div class="error" id="err-prod-cost"></div>
-          </label>
-          <label>الكمية
-            <input id="prod-qty" type="number" min="0" step="1" />
-            <div class="error" id="err-prod-qty"></div>
-          </label>
-          <label>صورة المنتج / فاتورة (اختياري)
-            <input id="prod-image" type="file" accept="image/*" />
-          </label>
-          <div class="row">
-            <button type="submit" class="btn primary">حفظ</button>
-            <button id="modal-close" type="button" class="btn secondary">إالغاء</button>
-          </div>
-        </form>
-      </div>
-    </div>
+.field input, .field select, .mini-input{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#fff;
+  outline:none;
+  padding:14px 16px;
+  font-size:1rem;
+  color:var(--text);
+  transition:border-color .2s ease, box-shadow .2s ease;
+}
 
-    <div id="modal-ocr" class="modal hidden">
-      <div class="modal-card">
-        <h3>محاكاة OCR</h3>
-        <p>اختر صورة فاتورة لإرسالها إلى endpoint الخادم (محاكاة)</p>
-        <input id="ocr-image" type="file" accept="image/*" />
-        <div class="mt">
-          <button id="send-ocr" class="btn primary">إرسال إلى OCR (محاكاة)</button>
-          <button id="ocr-close" class="btn secondary">إغلاق</button>
-        </div>
-        <pre id="ocr-result" class="mt small muted"></pre>
-      </div>
-    </div>
+.field input:focus, .field select:focus, .mini-input:focus{
+  border-color:rgba(10,126,164,.55);
+  box-shadow:0 0 0 4px rgba(10,126,164,.12);
+}
 
-  </div>
+.error{
+  color:var(--danger);
+  font-size:0.8rem;
+  min-height:14px;
+}
 
-  <script src="app.js"></script>
-</body>
-</html>
+.actions-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:10px;
+}
+
+.btn{
+  border:none;
+  border-radius:14px;
+  padding:13px 18px;
+  font-weight:700;
+  cursor:pointer;
+  transition:transform .15s ease, box-shadow .2s ease, opacity .2s ease;
+}
+
+.btn:hover{
+  transform:translateY(-1px);
+}
+
+.btn.primary{
+  background:linear-gradient(135deg,#0f172a,#0a7ea4);
+  color:#fff;
+  box-shadow:0 12px 18px rgba(10,126,164,.18);
+  flex:1 1 180px;
+}
+
+.btn.secondary{
+  background:#f3f4f6;
+  color:var(--text);
+  border:1px solid var(--line);
+}
+
+.btn.soft{
+  background:#f8fafc;
+  border:1px solid var(--line);
+  color:var(--text);
+}
+
+.btn.ghost{
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--text);
+}
+
+.security-note{
+  margin-top:18px;
+  color:var(--muted);
+  font-size:0.85rem;
+}
+
+.layout{
+  min-height:100vh;
+}
+
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:18px 28px;
+  background:rgba(255,255,255,0.84);
+  border-bottom:1px solid var(--line);
+  backdrop-filter: blur(8px);
+  position:sticky;
+  top:0;
+  z-index:20;
+}
+
+.brand-wrap{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.brand-wrap h2{
+  margin:0;
+  font-size:2rem;
+  font-weight:800;
+  letter-spacing:-0.05em;
+}
+
+.top-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.business-pill{
+  background:#edf6f8;
+  color:#0d4a5b;
+  border:1px solid rgba(10,126,164,.15);
+  border-radius:999px;
+  padding:8px 12px;
+  font-weight:700;
+  font-size:0.9rem;
+}
+
+.content{
+  display:flex;
+  padding:22px 20px 28px;
+  gap:18px;
+}
+
+.sidebar{
+  width:260px;
+  background:transparent;
+}
+
+.sidebar ul{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.sidebar li{
+  background:rgba(255,255,255,0.5);
+  border:1px solid transparent;
+  color:var(--muted);
+  border-radius:14px;
+  padding:14px 16px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+
+.sidebar li.active{
+  background:linear-gradient(135deg,#eaf8fd,#ffffff);
+  color:var(--primary-2);
+  border-color:rgba(10,126,164,.15);
+  box-shadow:0 8px 18px rgba(10,126,164,.08);
+}
+
+.panel-view{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:18px 18px 20px;
+}
+
+.panel-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:18px;
+}
+
+.panel-header h3{
+  margin:0;
+  font-size:1.5rem;
+  font-weight:800;
+  letter-spacing:-0.04em;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.summary-cards{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(160px, 1fr));
+  gap:14px;
+  margin-bottom:14px;
+}
+
+.metric-card{
+  background:linear-gradient(180deg,#ffffff,#f9fafb);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  box-shadow:0 8px 16px rgba(15,23,42,.03);
+}
+
+.metric-card strong{
+  font-size:1.6rem;
+  font-weight:800;
+  letter-spacing:-0.04em;
+  color:var(--primary);
+}
+
+.metric-card span{
+  color:var(--muted);
+  font-size:0.88rem;
+}
+
+.metric-card.accent{
+  background:linear-gradient(135deg,#0f172a,#0a7ea4);
+  color:#fff;
+}
+
+.metric-card.accent strong,
+.metric-card.accent span{
+  color:#fff;
+}
+
+.table-wrap{
+  overflow:auto;
+  background:#fff;
+  border-radius:16px;
+  border:1px solid var(--line);
+}
+
+.table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:740px;
+}
+
+.table th, .table td{
+  padding:14px 12px;
+  border-bottom:1px solid var(--line);
+  text-align:right;
+  font-size:0.96rem;
+}
+
+.table th{
+  background:#f8fafc;
+  color:var(--muted);
+  font-weight:700;
+  font-size:0.82rem;
+}
+
+.table td{
+  background:#fff;
+}
+
+.table.small th, .table.small td{
+  padding:10px 8px;
+  font-size:0.8rem;
+}
+
+.grid-two{
+  display:grid;
+  grid-template-columns:1.1fr 0.9fr;
+  gap:16px;
+}
+
+.card-box{
+  background:linear-gradient(180deg,#ffffff,#f8fafc);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px 16px;
+  box-shadow:0 8px 16px rgba(15,23,42,0.03);
+}
+
+.card-box h4{
+  margin:0 0 14px;
+  font-size:1.15rem;
+}
+
+.highlight-box{
+  background:linear-gradient(135deg,#eaf8fd,#f9fdff);
+}
+
+.result-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.result-list div{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  border-bottom:1px dashed rgba(148,163,184,.5);
+  padding-bottom:10px;
+}
+
+.result-list div:last-child{
+  border-bottom:none;
+  padding-bottom:0;
+}
+
+.result-list span{
+  color:var(--muted);
+  font-size:0.9rem;
+}
+
+.result-list strong{
+  font-size:1rem;
+  color:var(--primary);
+}
+
+.check-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:10px 0;
+  color:var(--text);
+  font-weight:600;
+}
+
+.check-row input{
+  accent-color:#0a7ea4;
+  width:18px;
+  height:18px;
+}
+
+.mini-input{
+  margin-bottom:10px;
+}
+
+.slider-block{
+  margin-top:8px;
+}
+
+.label-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:8px;
+}
+
+.label-row b{
+  color:var(--primary-2);
+}
+
+input[type="range"]{
+  width:100%;
+  accent-color:#0a7ea4;
+}
+
+.status-box{
+  margin-bottom:14px;
+}
+
+.recommendations{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.recommendations li{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px 14px;
+}
+
+.audit-list{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.audit-list li{
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+  color:var(--text);
+  line-height:1.8;
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,0.45);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:100;
+}
+
+.modal-card{
+  width:min(100%, 560px);
+  background:#fff;
+  border-radius:24px;
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  padding:22px;
+}
+
+.modal-card h3{
+  margin:0 0 14px;
+  font-size:1.7rem;
+}
+
+.compact-modal{
+  width:min(100%, 420px);
+}
+
+.ocr-output{
+  margin-top:16px;
+  background:#f8fafc;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:12px;
+  color:var(--muted);
+  white-space:pre-wrap;
+  word-break:break-word;
+  font-size:0.85rem;
+}
+
+@media (max-width: 980px){
+  .content{
+    flex-direction:column;
+  }
+
+  .sidebar{
+    width:100%;
+  }
+
+  .sidebar ul{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(150px, 1fr));
+  }
+
+  .grid-two{
+    grid-template-columns:1fr;
+  }
+
+  .summary-cards{
+    grid-template-columns:1fr;
+  }
+}
+
+@media (max-width: 560px){
+  .topbar{
+    padding:14px 16px;
+  }
+
+  .brand-wrap h2{
+    font-size:1.4rem;
+  }
+
+  .panel{
+    padding:14px;
+  }
+
+  .panel-header{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .actions-row{
+    flex-direction:column;
+  }
+
+  .btn{
+    width:100%;
+  }
+
+  .sidebar ul{
+    grid-template-columns:1fr;
+  }
+}
