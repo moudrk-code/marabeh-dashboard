@@ -1,2 +1,53 @@
-# marabeh-dashboard
-نموذج Dashboard تفاعلي لمرابح الذكي — واجهة HTML/CSS/JS (نموذج تجريبي)
+CREATE TABLE users (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  business_name VARCHAR(255) NOT NULL,
+  email VARCHAR(320) NOT NULL UNIQUE,
+  password_hash VARCHAR(255),
+  role ENUM('business','admin') DEFAULT 'business',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE products (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  owner_id BIGINT NOT NULL,
+  name TEXT NOT NULL,
+  supplier VARCHAR(255) NOT NULL,
+  unit_cost DECIMAL(12,2) NOT NULL,
+  qty INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE invoices (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  owner_id BIGINT NOT NULL,
+  filename VARCHAR(512),
+  file_path VARCHAR(1024),
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  total_amount DECIMAL(12,2),
+  processed JSON NULL,
+  FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE bank_statements (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  owner_id BIGINT NOT NULL,
+  filename VARCHAR(512),
+  file_path VARCHAR(1024),
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  processed JSON NULL,
+  FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE recommendation_audit_logs (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  owner_id BIGINT,
+  recommendation_key VARCHAR(255),
+  action VARCHAR(255),
+  destination VARCHAR(255),
+  metric JSON,
+  executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL
+);
