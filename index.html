@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>مرابح الذكي — نموذج Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div id="app" class="app">
+    <div id="login-view" class="panel centered">
+      <h1>مرحبًا بـ مرابح الذكي</h1>
+      <p>سجّل دخول منشأتك لتجربة النموذج السريع</p>
+      <form id="login-form" class="form">
+        <label>اسم المنشأة
+          <input id="business-name" type="text" placeholder="اسم المنشأة" required />
+          <div class="error" id="err-business-name"></div>
+        </label>
+        <label>البريد الإلكتروني
+          <input id="business-email" type="email" placeholder="business@example.com" required />
+          <div class="error" id="err-business-email"></div>
+        </label>
+        <div class="row">
+          <button type="submit" class="btn primary">دخول تجريبي</button>
+          <button id="guest-btn" type="button" class="btn secondary">تجربة كزائر</button>
+        </div>
+      </form>
+      <small class="muted">النموذج يحفظ بياناتك محليًا فقط (localStorage)</small>
+    </div>
+
+    <div id="main-view" class="layout hidden">
+      <header class="topbar">
+        <div class="brand">
+          <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663977640392/YhaZejpwgPEauNrR.png" alt="لوغو" />
+          <h2>مرابح الذكي</h2>
+        </div>
+        <div class="top-actions">
+          <span id="current-business"></span>
+          <button id="logout" class="btn ghost">تسجيل خروج</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <nav class="sidebar">
+          <ul>
+            <li data-tab="purchases" class="active">إدارة المشتريات والجملة</li>
+            <li data-tab="margins">مخطط هوامش الربح</li>
+            <li data-tab="bank">المطابقة البنكية</li>
+            <li data-tab="dashboard">لوحة التحليلات والتقارير</li>
+            <li data-tab="activity">السجل</li>
+          </ul>
+        </nav>
+
+        <section class="panel-view">
+          <section id="tab-purchases" class="panel active-panel">
+            <div class="panel-header">
+              <h3>إدارة المشتريات والجملة</h3>
+              <div class="actions">
+                <input id="file-upload" type="file" accept=".xlsx,.xls,.csv" hidden />
+                <button id="btn-upload-file" class="btn">رفع ملف Excel/CSV</button>
+                <button id="btn-add-product" class="btn primary">إضافة منتج</button>
+                <button id="btn-upload-invoice" class="btn">رفع صورة فاتورة (OCR)</button>
+              </div>
+            </div>
+
+            <div id="upload-status" class="upload-status hidden"></div>
+
+            <div class="summary-cards">
+              <div class="card"><strong id="card-total-cost">0 SAR</strong><div>إجمالي تكلفة المشتريات</div></div>
+              <div class="card"><strong id="card-tax-total">0 SAR</strong><div>إجمالي الضريبة (15%)</div></div>
+              <div class="card"><strong id="card-products-count">0</strong><div>عدد المنتجات</div></div>
+            </div>
+
+            <div class="table-wrap">
+              <table id="products-table" class="table">
+                <thead>
+                  <tr>
+                    <th>اسم المنتج</th>
+                    <th>المورد</th>
+                    <th>سعر الجملة (SAR)</th>
+                    <th>ضريبة 15%</th>
+                    <th>الكمية</th>
+                    <th>إجمالي</th>
+                    <th>إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="tab-margins" class="panel">
+            <div class="panel-header">
+              <h3>مخطط هوامش الربح</h3>
+            </div>
+
+            <div class="grid">
+              <div class="card">
+                <label>تحديد المنتج للاختبار
+                  <select id="margin-product"></select>
+                </label>
+                <label>الهامش (%) <span id="margin-val">25</span>
+                  <input id="margin-slider" type="range" min="5" max="50" value="25" />
+                </label>
+                <label>هامش ثابت لكل قطعة (SAR)
+                  <input id="fixed-profit" type="number" min="0" step="0.01" placeholder="0.00" />
+                </label>
+                <label><input id="include-shipping" type="checkbox" /> تضمين تكلفة الشحن (SAR)
+                  <input id="shipping-cost" type="number" min="0" step="0.01" placeholder="0.00" /></label>
+                <label><input id="include-gateway" type="checkbox" /> تضمين رسوم بوابة الدفع 2.5%</label>
+                <label><input id="include-vat" type="checkbox" /> تضمين ضريبة القيمة المضافة 15%</label>
+              </div>
+
+              <div class="card" id="margin-result">
+                <h4>النتيجة</h4>
+                <div>سعر البيع المقترح: <strong id="sale-price">0.00 SAR</strong></div>
+                <div>السعر قبل الضريبة: <strong id="price-before-vat">0.00 SAR</strong></div>
+                <div>صافي الربح: <strong id="net-profit">0.00 SAR</strong></div>
+                <div>قيمة الضريبة (15%): <strong id="vat-value">0.00 SAR</strong></div>
+              </div>
+            </div>
+
+            <div class="card mt">
+              <h4>مقارنة هوامش</h4>
+              <table class="table small" id="margins-compare">
+                <thead><tr><th>هامش</th><th>سعر الجملة</th><th>سعر البيع المقترح</th><th>صافي الربح</th><th>سعر شامل الضريبة</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="tab-bank" class="panel">
+            <div class="panel-header">
+              <h3>المطابقة البنكية</h3>
+              <div class="actions">
+                <input id="bank-file" type="file" accept=".xlsx,.xls,.csv,.pdf,image/*" hidden />
+                <button id="btn-bank-file" class="btn">رفع كشف الحساب</button>
+              </div>
+            </div>
+
+            <div id="bank-status" class="card"></div>
+
+            <div class="card">
+              <h4>المطابقة (تجريبي)</h4>
+              <table class="table" id="bank-table">
+                <thead><tr><th>التاريخ</th><th>البيان</th><th>المبلغ</th><th>مطابقة</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="row mt">
+              <button id="export-bank-report" class="btn">تصدير تقرير Excel</button>
+              <button id="export-bank-pdf" class="btn">تصدير PDF (محاكاة)</button>
+            </div>
+          </section>
+
+          <section id="tab-dashboard" class="panel">
+            <div class="panel-header">
+              <h3>لوحة التحليلات والتقارير</h3>
+            </div>
+            <div class="summary-cards">
+              <div class="card"><strong id="dash-total-cost">0 SAR</strong><div>إجمالي تكلفة المشتريات</div></div>
+              <div class="card"><strong id="dash-expected-profit">0 SAR</strong><div>الأرباح المتوقعة (هامش 25%)</div></div>
+              <div class="card"><strong id="dash-actual-profit">0 SAR</strong><div>الأرباح المحققة (من كشف البنك)</div></div>
+            </div>
+            <div class="card mt">
+              <h4>توصيات ذكية (تجريبية)</h4>
+              <ul id="recommendations"></ul>
+            </div>
+          </section>
+
+          <section id="tab-activity" class="panel">
+            <div class="panel-header"><h3>السجل</h3></div>
+            <div class="card">
+              <ul id="audit-list"></ul>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div id="modal-add-product" class="modal hidden">
+      <div class="modal-card">
+        <h3>إضافة منتج جديد</h3>
+        <form id="add-product-form" class="form">
+          <label>اسم المنتج
+            <input id="prod-name" type="text" />
+            <div class="error" id="err-prod-name"></div>
+          </label>
+          <label>المورد
+            <input id="prod-supplier" type="text" />
+            <div class="error" id="err-prod-supplier"></div>
+          </label>
+          <label>سعر الجملة (SAR)
+            <input id="prod-cost" type="number" min="0.01" step="0.01" />
+            <div class="error" id="err-prod-cost"></div>
+          </label>
+          <label>الكمية
+            <input id="prod-qty" type="number" min="0" step="1" />
+            <div class="error" id="err-prod-qty"></div>
+          </label>
+          <label>صورة المنتج / فاتورة (اختياري)
+            <input id="prod-image" type="file" accept="image/*" />
+          </label>
+          <div class="row">
+            <button type="submit" class="btn primary">حفظ</button>
+            <button id="modal-close" type="button" class="btn secondary">إالغاء</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="modal-ocr" class="modal hidden">
+      <div class="modal-card">
+        <h3>محاكاة OCR</h3>
+        <p>اختر صورة فاتورة لإرسالها إلى endpoint الخادم (محاكاة)</p>
+        <input id="ocr-image" type="file" accept="image/*" />
+        <div class="mt">
+          <button id="send-ocr" class="btn primary">إرسال إلى OCR (محاكاة)</button>
+          <button id="ocr-close" class="btn secondary">إغلاق</button>
+        </div>
+        <pre id="ocr-result" class="mt small muted"></pre>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
