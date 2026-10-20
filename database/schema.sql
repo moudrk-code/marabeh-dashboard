@@ -1,0 +1,75 @@
+CREATE TABLE users (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  business_name VARCHAR(255) NOT NULL,
+  email VARCHAR(320) NOT NULL UNIQUE,
+  password_hash VARCHAR(255),
+  role ENUM('business','admin') DEFAULT 'business',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE businesses (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  owner_user_id BIGINT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  logo_url VARCHAR(500),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE suppliers (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  business_id BIGINT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  phone VARCHAR(50),
+  email VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+);
+
+CREATE TABLE products (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  business_id BIGINT NOT NULL,
+  supplier_id BIGINT,
+  name TEXT NOT NULL,
+  unit_cost DECIMAL(12,2) NOT NULL,
+  qty INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
+  FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL
+);
+
+CREATE TABLE invoices (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  business_id BIGINT NOT NULL,
+  supplier_id BIGINT,
+  filename VARCHAR(512),
+  file_path VARCHAR(1024),
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  total_amount DECIMAL(12,2),
+  processed JSON NULL,
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
+  FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL
+);
+
+CREATE TABLE bank_statements (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  business_id BIGINT NOT NULL,
+  filename VARCHAR(512),
+  file_path VARCHAR(1024),
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  processed JSON NULL,
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+);
+
+CREATE TABLE recommendation_audit_logs (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  business_id BIGINT,
+  recommendation_key VARCHAR(255),
+  action VARCHAR(255),
+  destination VARCHAR(255),
+  metric JSON,
+  executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE SET NULL
+);
