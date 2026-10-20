@@ -1,258 +1,331 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>مرابح الذكي — لوحة التحكم</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-</head>
-<body>
-  <div id="app" class="app-shell">
-    <div id="login-view" class="login-screen panel centered">
-      <div class="brand-mark">م</div>
-      <h1>مرحبا بـ مرابح الذكي</h1>
-      <p class="subtitle">سجل دخول منشأتك لتتبع المشتريات، الهوامش، والمطابقة البنكية</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>مرابح الذكي — لوحة التحكم</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <div id="login-view" class="login-screen panel centered">
+        <div class="brand-mark">م</div>
+        <h1>مرحبا بـ مرابح الذكي</h1>
+        <p class="subtitle">سجل دخول منشأتك لتتبع المشتريات، الهوامش، والمطابقة البنكية</p>
 
-      <form id="login-form" class="login-form">
-        <label class="field">
-          <span>اسم المنشأة</span>
-          <input id="business-name" type="text" placeholder="مثال: مؤسسة النور" required />
-          <small class="error" id="err-business-name"></small>
-        </label>
+        <form id="login-form" class="login-form">
+          <label class="field">
+            <span>اسم المنشأة</span>
+            <input id="business-name" type="text" placeholder="مثال: مؤسسة النور" required />
+            <small class="error" id="err-business-name"></small>
+          </label>
 
-        <label class="field">
-          <span>البريد الإلكتروني</span>
-          <input id="business-email" type="email" placeholder="business@example.com" required />
-          <small class="error" id="err-business-email"></small>
-        </label>
+          <label class="field">
+            <span>البريد الإلكتروني</span>
+            <input id="business-email" type="email" placeholder="business@example.com" required />
+            <small class="error" id="err-business-email"></small>
+          </label>
 
-        <div class="actions-row">
-          <button type="submit" class="btn primary">دخول تجريبي</button>
-          <button id="guest-btn" type="button" class="btn secondary">تجربة كزائر</button>
-        </div>
-      </form>
-
-      <div class="security-note">
-        <span>•</span> يتم حفظ البيانات محلياً داخل المتصفح فقط
-      </div>
-    </div>
-
-    <div id="main-view" class="layout hidden">
-      <header class="topbar">
-        <div class="brand-wrap">
-          <div class="brand-mark small">م</div>
-          <div>
-            <h2>مرابح الذكي</h2>
+          <div class="actions-row">
+            <button type="submit" class="btn primary">دخول تجريبي</button>
+            <button id="guest-btn" type="button" class="btn secondary">تجربة كزائر</button>
           </div>
+        </form>
+
+        <div class="security-note">
+          <span>•</span> يتم حفظ البيانات محلياً داخل المتصفح فقط
         </div>
+      </div>
 
-        <div class="top-actions">
-          <span id="current-business" class="business-pill">زائر</span>
-          <button id="logout" class="btn ghost">تسجيل خروج</button>
-        </div>
-      </header>
-
-      <main class="content">
-        <nav class="sidebar">
-          <ul>
-            <li data-tab="purchases" class="active">إدارة المشتريات</li>
-            <li data-tab="margins">هوامش الربح</li>
-            <li data-tab="bank">المطابقة البنكية</li>
-            <li data-tab="dashboard">لوحة التحليلات</li>
-            <li data-tab="activity">السجل</li>
-          </ul>
-        </nav>
-
-        <section class="panel-view">
-          <section id="tab-purchases" class="panel active-panel">
-            <div class="panel-header">
-              <h3>إدارة المشتريات والجملة</h3>
-              <div class="actions">
-                <input id="file-upload" type="file" accept=".xlsx,.xls,.csv" hidden />
-                <button id="btn-upload-file" class="btn soft">رفع ملف Excel/CSV</button>
-                <button id="btn-add-product" class="btn primary">إضافة منتج</button>
-                <button id="btn-upload-invoice" class="btn soft">رفع فاتورة OCR</button>
-              </div>
+      <div id="main-view" class="layout hidden">
+        <header class="topbar">
+          <div class="brand-wrap">
+            <div class="brand-mark small">م</div>
+            <div>
+              <h2>مرابح الذكي</h2>
             </div>
+          </div>
 
-            <div id="upload-status" class="upload-status hidden"></div>
+          <div class="top-actions">
+            <span id="current-business"></span>
+            <button id="logout" class="btn ghost">تسجيل خروج</button>
+          </div>
+        </header>
 
-            <div class="summary-cards">
-              <div class="metric-card">
-                <strong id="card-total-cost">0 SAR</strong>
-                <span>إجمالي تكلفة المشتريات</span>
-              </div>
-              <div class="metric-card">
-                <strong id="card-tax-total">0 SAR</strong>
-                <span>إجمالي الضريبة</span>
-              </div>
-              <div class="metric-card accent">
-                <strong id="card-products-count">0</strong>
-                <span>عدد المنتجات</span>
-              </div>
-            </div>
+        <main class="content">
+          <nav class="sidebar">
+            <ul>
+              <li data-tab="purchases" class="active">إدارة المشتريات والجملة</li>
+              <li data-tab="margins">مخطط هوامش الربح</li>
+              <li data-tab="bank">المطابقة البنكية</li>
+              <li data-tab="dashboard">لوحة التحليلات والتقارير</li>
+              <li data-tab="activity">السجل</li>
+            </ul>
+          </nav>
 
-            <div class="table-wrap">
-              <table id="products-table" class="table">
-                <thead>
-                  <tr>
-                    <th>اسم المنتج</th>
-                    <th>المورد</th>
-                    <th>سعر الجملة</th>
-                    <th>ضريبة 15%</th>
-                    <th>الكمية</th>
-                    <th>الإجمالي</th>
-                    <th>إجراءات</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </section>
-
-          <section id="tab-margins" class="panel">
-            <div class="panel-header">
-              <h3>مخطط هوامش الربح</h3>
-            </div>
-
-            <div class="grid-two">
-              <div class="card-box">
-                <label class="field compact">
-                  <span>تحديد المنتج</span>
-                  <select id="margin-product"></select>
-                </label>
-
-                <label class="field compact slider-block">
-                  <div class="label-row">
-                    <span>الهامش</span>
-                    <b id="margin-val">25</b>
-                  </div>
-                  <input id="margin-slider" type="range" min="5" max="50" value="25" />
-                </label>
-
-                <label class="field compact">
-                  <span>هامش ثابت لكل قطعة (SAR)</span>
-                  <input id="fixed-profit" type="number" min="0" step="0.01" placeholder="0.00" />
-                </label>
-
-                <label class="check-row">
-                  <input id="include-shipping" type="checkbox" />
-                  <span>تضمين تكلفة الشحن</span>
-                </label>
-                <input id="shipping-cost" type="number" min="0" step="0.01" placeholder="0.00" class="mini-input" />
-
-                <label class="check-row">
-                  <input id="include-gateway" type="checkbox" />
-                  <span>رسوم بوابة الدفع 2.5%</span>
-                </label>
-
-                <label class="check-row">
-                  <input id="include-vat" type="checkbox" />
-                  <span>ضريبة القيمة المضافة 15%</span>
-                </label>
-              </div>
-
-              <div class="card-box highlight-box" id="margin-result">
-                <h4>نتيجة السعر المقترح</h4>
-                <div class="result-list">
-                  <div><span>سعر البيع المقترح</span><strong id="sale-price">0.00 SAR</strong></div>
-                  <div><span>السعر قبل الضريبة</span><strong id="price-before-vat">0.00 SAR</strong></div>
-                  <div><span>صافي الربح</span><strong id="net-profit">0.00 SAR</strong></div>
-                  <div><span>قيمة الضريبة</span><strong id="vat-value">0.00 SAR</strong></div>
+          <section class="panel-view">
+            <section id="tab-purchases" class="panel active-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>إدارة المشتريات والجملة</h3>
+                  <p>رفع الفواتير، المشتريات، وتحديث أسعار الجملة</p>
+                </div>
+                <div class="actions">
+                  <input id="file-upload" type="file" accept=".xlsx,.xls,.csv" hidden />
+                  <button id="btn-upload-file" class="btn secondary">رفع Excel/CSV</button>
+                  <button id="btn-add-product" class="btn primary">إضافة منتج</button>
+                  <button id="btn-upload-invoice" class="btn soft">رفع صورة فاتورة</button>
                 </div>
               </div>
-            </div>
 
-            <div class="card-box mt">
-              <h4>مقارنة الهوامش</h4>
-              <table class="table small" id="margins-compare">
-                <thead>
-                  <tr>
-                    <th>الهامش</th>
-                    <th>سعر الجملة</th>
-                    <th>سعر البيع</th>
-                    <th>صافي الربح</th>
-                    <th>السعر شامل الضريبة</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </section>
+              <div id="upload-status" class="upload-status hidden"></div>
 
-          <section id="tab-bank" class="panel">
-            <div class="panel-header">
-              <h3>المطابقة البنكية</h3>
-              <div class="actions">
-                <input id="bank-file" type="file" accept=".xlsx,.xls,.csv,.pdf,image/*" hidden />
-                <button id="btn-bank-file" class="btn soft">رفع كشف الحساب</button>
+              <div class="summary-cards">
+                <div class="card">
+                  <strong id="card-total-cost">0 SAR</strong>
+                  <div>إجمالي تكلفة المشتريات</div>
+                </div>
+                <div class="card">
+                  <strong id="card-tax-total">0 SAR</strong>
+                  <div>إجمالي الضريبة (15%)</div>
+                </div>
+                <div class="card">
+                  <strong id="card-products-count">0</strong>
+                  <div>عدد المنتجات</div>
+                </div>
               </div>
-            </div>
 
-            <div id="bank-status" class="card-box status-box"></div>
+              <div class="invoice-toolkit">
+                <div class="tool-card">
+                  <div class="tool-header">
+                    <span class="tool-badge">الفواتير والنصوص</span>
+                    <h4>إدخال نص الفاتورة</h4>
+                  </div>
 
-            <div class="card-box">
-              <h4>المطابقة (تجريبية)</h4>
-              <table class="table" id="bank-table">
-                <thead>
-                  <tr>
-                    <th>التاريخ</th>
-                    <th>البيان</th>
-                    <th>المبلغ</th>
-                    <th>الحالة</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
+                  <textarea
+                    id="invoice-text-input"
+                    rows="7"
+                    placeholder="مثال:&#10;اسم المنتج: بطارية 12V&#10;المورد: مصنع الغد&#10;السعر: 120&#10;الكمية: 10"
+                  ></textarea>
 
-            <div class="row mt">
-              <button id="export-bank-report" class="btn soft">تصدير Excel</button>
-              <button id="export-bank-pdf" class="btn soft">تصدير PDF</button>
-            </div>
-          </section>
+                  <div class="tool-actions">
+                    <label class="upload-inline">
+                      <input id="invoice-text-file" type="file" accept=".txt,.csv,.json,.doc,.docx" hidden />
+                      <span>اختيار ملف نصي</span>
+                    </label>
+                    <button id="btn-parse-invoice-text" class="btn primary">استخراج البيانات</button>
+                  </div>
 
-          <section id="tab-dashboard" class="panel">
-            <div class="panel-header">
-              <h3>لوحة التحليلات والتقارير</h3>
-            </div>
-
-            <div class="summary-cards">
-              <div class="metric-card">
-                <strong id="dash-total-cost">0 SAR</strong>
-                <span>إجمالي تكلفة المشتريات</span>
+                  <div id="invoice-text-status" class="status-note">يمكنك لصق نص الفاتورة هنا عند تعذر قراءة الملف.</div>
+                </div>
               </div>
-              <div class="metric-card">
-                <strong id="dash-expected-profit">0 SAR</strong>
-                <span>الأرباح المتوقعة</span>
-              </div>
-              <div class="metric-card accent">
-                <strong id="dash-actual-profit">0 SAR</strong>
-                <span>الأرباح المحققة</span>
-              </div>
-            </div>
 
-            <div class="card-box mt">
-              <h4>توصيات ذكية</h4>
-              <ul id="recommendations" class="recommendations"></ul>
-            </div>
-          </section>
+              <div class="table-wrap">
+                <table id="products-table" class="table">
+                  <thead>
+                    <tr>
+                      <th>اسم المنتج</th>
+                      <th>المورد</th>
+                      <th>سعر الجملة (SAR)</th>
+                      <th>ضريبة 15%</th>
+                      <th>الكمية</th>
+                      <th>إجمالي</th>
+                      <th>إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </section>
 
-          <section id="tab-activity" class="panel">
-            <div class="panel-header"><h3>السجل</h3></div>
-            <div class="card-box">
+            <section id="tab-margins" class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>مخطط هوامش الربح</h3>
+                  <p>اختبر استراتيجيات البيع والهوامش</p>
+                </div>
+              </div>
+
+              <div class="grid two-col">
+                <div class="card stack">
+                  <label class="field compact">
+                    <span>تحديد المنتج للاختبار</span>
+                    <select id="margin-product"></select>
+                  </label>
+
+                  <label class="field compact">
+                    <span>هامش الربح</span>
+                    <div class="range-row">
+                      <input id="margin-slider" type="range" min="5" max="50" value="25" />
+                      <strong id="margin-val">25</strong>
+                    </div>
+                  </label>
+
+                  <label class="checkbox-row">
+                    <input id="include-shipping" type="checkbox" />
+                    <span>تفعيل الشحن</span>
+                  </label>
+
+                  <label class="field compact">
+                    <span>تكلفة الشحن</span>
+                    <input id="shipping-cost" type="number" value="15" />
+                  </label>
+
+                  <label class="checkbox-row">
+                    <input id="include-gateway" type="checkbox" />
+                    <span>رسوم البوابة 2.5%</span>
+                  </label>
+
+                  <label class="checkbox-row">
+                    <input id="include-vat" type="checkbox" />
+                    <span>ضريبة القيمة المضافة 15%</span>
+                  </label>
+
+                  <label class="field compact">
+                    <span>ربح ثابت لكل قطعة</span>
+                    <input id="fixed-profit" type="number" value="0" />
+                  </label>
+                </div>
+
+                <div class="card stack">
+                  <div class="result-box">
+                    <span>السعر المقترح</span>
+                    <strong id="sale-price">0 SAR</strong>
+                  </div>
+                  <div class="result-box muted-box">
+                    <span>السعر قبل الضريبة</span>
+                    <strong id="price-before-vat">0 SAR</strong>
+                  </div>
+                  <div class="result-box muted-box">
+                    <span>صافي الربح</span>
+                    <strong id="net-profit">0 SAR</strong>
+                  </div>
+                  <div class="result-box muted-box">
+                    <span>قيمة الضريبة</span>
+                    <strong id="vat-value">0 SAR</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="table-wrap margin-table">
+                <table id="margins-compare" class="table small">
+                  <thead>
+                    <tr>
+                      <th>الهامش</th>
+                      <th>سعر الجملة</th>
+                      <th>سعر البيع</th>
+                      <th>صافي الربح</th>
+                      <th>السعر شامل الضريبة</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section id="tab-bank" class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>المطابقة البنكية</h3>
+                  <p>تحميل كشف الحساب أو إرفاقه كنص بسرعة</p>
+                </div>
+                <div class="actions">
+                  <input id="bank-file" type="file" accept=".xlsx,.xls,.csv,.pdf,.png,.jpg,.jpeg,.webp" hidden />
+                  <button id="btn-bank-file" class="btn secondary">رفع كشف حساب</button>
+                </div>
+              </div>
+
+              <div id="bank-status" class="upload-status">جاهز لرفع كشف الحساب أو لصق نصه.</div>
+
+              <div class="invoice-toolkit bank-toolkit">
+                <div class="tool-card">
+                  <div class="tool-header">
+                    <span class="tool-badge">الحوالات والنصوص</span>
+                    <h4>إرفاق نص كشف الحساب</h4>
+                  </div>
+
+                  <textarea
+                    id="bank-text-input"
+                    rows="7"
+                    placeholder="مثال:&#10;2026-10-01 | تحصيل مبيعات | 2500&#10;2026-10-02 | عمولة بطاقة | -145.50"
+                  ></textarea>
+
+                  <div class="tool-actions">
+                    <button id="btn-attach-bank-text" class="btn primary">إرفاق النص البنكي</button>
+                  </div>
+
+                  <div id="bank-text-status" class="status-note">سيُضاف النص إلى جدول كشف الحساب عند التحقق.</div>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table id="bank-table" class="table">
+                  <thead>
+                    <tr>
+                      <th>التاريخ</th>
+                      <th>البيان</th>
+                      <th>المبلغ</th>
+                      <th>الاتجاه</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section id="tab-dashboard" class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>لوحة التحليلات والتقارير</h3>
+                  <p>مؤشرات الأداء الفعلي والمتوقع</p>
+                </div>
+              </div>
+
+              <div class="summary-cards dashboard-cards">
+                <div class="card chart-card">
+                  <strong id="dash-total-cost">0 SAR</strong>
+                  <div>إجمالي تكلفة المشتريات</div>
+                </div>
+                <div class="card chart-card">
+                  <strong id="dash-expected-profit">0 SAR</strong>
+                  <div>الأرباح المتوقعة</div>
+                </div>
+                <div class="card chart-card">
+                  <strong id="dash-actual-profit">0 SAR</strong>
+                  <div>الأرباح الفعلية</div>
+                </div>
+              </div>
+
+              <div class="recommendations-box">
+                <h4>توصيات ذكية</h4>
+                <ul id="recommendations"></ul>
+              </div>
+            </section>
+
+            <section id="tab-activity" class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>السجل</h3>
+                  <p>آخر الأنشطة المسجلة داخل التطبيق</p>
+                </div>
+              </div>
+
               <ul id="audit-list" class="audit-list"></ul>
-            </div>
+            </section>
           </section>
-        </section>
-      </main>
+        </main>
+      </div>
     </div>
 
     <div id="modal-add-product" class="modal hidden">
       <div class="modal-card">
-        <h3>إضافة منتج جديد</h3>
-        <form id="add-product-form" class="login-form">
+        <div class="modal-header">
+          <h4>إضافة منتج جديد</h4>
+          <button id="modal-close" type="button" class="btn ghost">إغلاق</button>
+        </div>
+
+        <form id="add-product-form" class="form-grid">
           <label class="field">
             <span>اسم المنتج</span>
             <input id="prod-name" type="text" />
@@ -260,13 +333,13 @@
           </label>
 
           <label class="field">
-            <span>المورد</span>
+            <span>اسم المورد</span>
             <input id="prod-supplier" type="text" />
             <small class="error" id="err-prod-supplier"></small>
           </label>
 
           <label class="field">
-            <span>سعر الجملة (SAR)</span>
+            <span>سعر الجملة</span>
             <input id="prod-cost" type="number" min="0.01" step="0.01" />
             <small class="error" id="err-prod-cost"></small>
           </label>
@@ -277,33 +350,26 @@
             <small class="error" id="err-prod-qty"></small>
           </label>
 
-          <label class="field">
-            <span>صورة المنتج أو الفاتورة</span>
-            <input id="prod-image" type="file" accept="image/*" />
-          </label>
-
-          <div class="actions-row">
-            <button type="submit" class="btn primary">حفظ</button>
-            <button id="modal-close" type="button" class="btn secondary">إلغاء</button>
-          </div>
+          <button type="submit" class="btn primary full">حفظ المنتج</button>
         </form>
       </div>
     </div>
 
     <div id="modal-ocr" class="modal hidden">
-      <div class="modal-card compact-modal">
-        <h3>محاكاة OCR</h3>
-        <p>اختر صورة فاتورة لإرسالها إلى الخادم (محاكاة)</p>
-        <input id="ocr-image" type="file" accept="image/*" />
-        <div class="actions-row mt">
-          <button id="send-ocr" class="btn primary">إرسال إلى OCR</button>
-          <button id="ocr-close" class="btn secondary">إغلاق</button>
+      <div class="modal-card wide">
+        <div class="modal-header">
+          <h4>رفع فاتورة أو صورة</h4>
+          <button id="ocr-close" type="button" class="btn ghost">إغلاق</button>
         </div>
-        <pre id="ocr-result" class="ocr-output"></pre>
+
+        <div class="ocr-panel">
+          <input id="ocr-image" type="file" accept="image/*" />
+          <button id="send-ocr" class="btn primary">إرسال إلى OCR</button>
+        </div>
+        <pre id="ocr-result" class="ocr-result">انتظار صورة الفاتورة...</pre>
       </div>
     </div>
-  </div>
 
-  <script src="app.js"></script>
-</body>
+    <script src="app.js"></script>
+  </body>
 </html>
